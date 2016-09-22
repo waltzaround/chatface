@@ -7,18 +7,18 @@ const app = express()
 
 app.set('port', (process.env.PORT || 5000))
 
-// Process application/x-www-form-urlencoded
+// parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({extended: false}))
 
-// Process application/json
+// parse application/json
 app.use(bodyParser.json())
 
-// Index route
+// index
 app.get('/', function (req, res) {
-    res.send('Hello world, I am a chat bot')
+    res.send('hello world i am a secret bot')
 })
 
-// for Facebook verification
+// for facebook verification
 app.get('/webhook/', function (req, res) {
     if (req.query['hub.verify_token'] === 'my_voice_is_my_password_verify_me') {
         res.send(req.query['hub.challenge'])
@@ -26,44 +26,52 @@ app.get('/webhook/', function (req, res) {
     res.send('Error, wrong token')
 })
 
-// Spin up the server
-app.listen(app.get('port'), function() {
-    console.log('running on port', app.get('port'))
-})
-
-//Begin an API endpoint. Yay!
+// to post data
 app.post('/webhook/', function (req, res) {
-	let messaging_events = req.body.entry[0].messaging_events
-	for( let i = 0; i < messaging_events.length; i++) {
-		let event = req.body.entry[0].messaging[i]
-		let sender = event.sender.id
-		if (event.message && event.message.text) {
-			let text = event.message.text
-			sendTextMessage(sender, "Text received, echo: " + text.substring (0,200))
-		}
-	}
-	res.sendStatus(200)
+    let messaging_events = req.body.entry[0].messaging
+    for (let i = 0; i < messaging_events.length; i++) {
+        let event = req.body.entry[0].messaging[i]
+        let sender = event.sender.id
+        if (event.message && event.message.text) {
+            let text = event.message.text
+            if (text === 'Generic') {
+                sendGenericMessage(sender)
+                continue
+            }
+            sendTextMessage(sender, "Text received, echo: " + text.substring(0, 200))
+        }
+        if (event.postback) {
+            let text = JSON.stringify(event.postback)
+            sendTextMessage(sender, "Postback received: "+text.substring(0, 200), token)
+            continue
+        }
+    }
+    res.sendStatus(200)
 })
 
-const token = "EAAEOy9TA4voBAPD7gGA3kduLaVgOFPAUmk2wUN9CSUM7mIr2xutIWFPSrCk84hDfvDCdcv6bMZBqdW1KOWGhReH7PzMeuNi3K1C8RNhcOZCGN9FQAkXKq09wBIPM65fLBvjMdlj4doLUhmy65Xv1dZC2cF28CXeWmFXiULvYQZDZD"
+
+// recommended to inject access tokens as environmental variables, e.g.
+// const token = process.env.PAGE_ACCESS_TOKEN
+const token = "EAAEOy9TA4voBABvAg24rF2FD6ZAUb8cNaAwJZAAAcyVdboNChs8ZA9tP9004941KHOnD6bJPCK7FFSxuM4Jr2zFHQtwkPoIfUqPlw2KCACgbVmtIE8jxWn0MytfPf518ZAGQ4CEl9MXeFZAgk5XvSnuYVAH1HuDHqYaUR48dsFgZDZD"
 
 function sendTextMessage(sender, text) {
-	let messageData = { text:text }
-	request ({
-		url: 'https://graph.facebook.com/v2.6/me/messages',
-		qs: {access_token:token},
-		method: 'POST',
-		json: {
-			recipient: {id:sender},
-			message: messageData,
-		}
-	}, function(error, response, body) {
-		if (error) {
-			console.log('Error sending messages: ', error)
-		} else if (response.body.error) {
-			console.log('Error: ', response.body.error)
-		}
-	})
+    let messageData = { text:text }
+    
+    request({
+        url: 'https://graph.facebook.com/v2.6/me/messages',
+        qs: {access_token:token},
+        method: 'POST',
+        json: {
+            recipient: {id:sender},
+            message: messageData,
+        }
+    }, function(error, response, body) {
+        if (error) {
+            console.log('Error sending messages: ', error)
+        } else if (response.body.error) {
+            console.log('Error: ', response.body.error)
+        }
+    })
 }
 
 function sendGenericMessage(sender) {
@@ -115,65 +123,7 @@ function sendGenericMessage(sender) {
     })
 }
 
-app.post('/webhook/', function (req, res) {
-    let messaging_events = req.body.entry[0].messaging
-    for (let i = 0; i < messaging_events.length; i++) {
-        let event = req.body.entry[0].messaging[i]
-        let sender = event.sender.id
-        if (event.message && event.message.text) {
-            let text = event.message.text
-            if (text === 'Generic') {
-                sendGenericMessage(sender)
-                continue
-            }
-            sendTextMessage(sender, "Text received, echo: " + text.substring(0, 200))
-        }
-    }
-    res.sendStatus(200)
+// spin spin sugar
+app.listen(app.get('port'), function() {
+    console.log('running on port', app.get('port'))
 })
-
- app.post('/webhook/', function (req, res) {
-    let messaging_events = req.body.entry[0].messaging
-    for (let i = 0; i < messaging_events.length; i++) {
-      let event = req.body.entry[0].messaging[i]
-      let sender = event.sender.id
-      if (event.message && event.message.text) {
-        let text = event.message.text
-        if (text === 'Generic') {
-            sendGenericMessage(sender)
-            continue
-        }
-        sendTextMessage(sender, "Text received, echo: " + text.substring(0, 200))
-      }
-      if (event.postback) {
-        let text = JSON.stringify(event.postback)
-        sendTextMessage(sender, "Postback received: "+text.substring(0, 200), token)
-        continue
-      }
-    }
-    res.sendStatus(200)
-  })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
